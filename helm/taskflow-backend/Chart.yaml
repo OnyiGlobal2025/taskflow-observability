@@ -1,0 +1,6 @@
+apiVersion: v2
+name: taskflow-backend
+description: Minimal deployment of the instrumented Taskflow backend for Project 3
+type: application
+version: 0.1.0
+appVersion: "otel-v1"

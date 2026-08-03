@@ -1,0 +1,16 @@
+image:
+  repository: 713923090919.dkr.ecr.us-east-1.amazonaws.com/taskflow-backend
+  tag: otel-v1
+  pullPolicy: IfNotPresent
+
+replicaCount: 2
+
+service:
+  port: 5000
+
+# Points at the Collector Service in the observability namespace.
+otel:
+  endpoint: http://otel-collector.observability.svc.cluster.local:4318
+  serviceName: taskflow-backend
+  serviceVersion: "1.0.0"
+  deployEnv: dev

@@ -1,0 +1,33 @@
+# OpenTelemetry Collector — gateway for Project 3.
+# Runs as a daemonset so it can tail each node's container logs (the pino
+# JSON from taskflow-backend) via the filelog receiver.
+mode: daemonset
+
+# Clean, predictable service DNS: otel-collector.observability.svc.cluster.local
+fullnameOverride: otel-collector
+
+# The k8s distribution bundles the filelog receiver and k8sattributes processor.
+image:
+  repository: otel/opentelemetry-collector-k8s
+
+# Daemonset mode omits the Service by default. Enable it so the app can push
+# OTLP to a stable ClusterIP DNS name instead of a node-local host port.
+service:
+  enabled: true
+
+presets:
+  # Adds the filelog receiver to the logs pipeline (tails /var/log/pods).
+  logsCollection:
+    enabled: true
+    includeCollectorLogs: false   # don't tail our own output — avoids a log loop
+  # Enriches all signals with k8s.pod.name / k8s.namespace.name / k8s.node.name.
+  kubernetesAttributes:
+    enabled: true
+
+# Print full telemetry content (resource attributes, span/metric names) so we
+# can verify service.name=taskflow-backend. Safe here because includeCollectorLogs
+# is false, which prevents the filelog->debug feedback loop.
+config:
+  exporters:
+    debug:
+      verbosity: detailed
