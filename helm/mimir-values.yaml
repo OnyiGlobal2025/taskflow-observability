@@ -1,0 +1,83 @@
+# Grafana Mimir — metrics backend for Project 3.
+# Minimal, classic (non-Kafka) architecture: single replicas, no zone-aware
+# replication, emptyDir storage. Durable data lives in S3.
+
+serviceAccount:
+  create: true
+  name: mimir
+
+mimir:
+  structuredConfig:
+    common:
+      storage:
+        backend: s3
+        s3:
+          endpoint: s3.us-east-1.amazonaws.com
+          region: us-east-1
+          bucket_name: taskflow-obs-mimir-713923090919
+          # No keys -> the AWS SDK uses the IAM role via Pod Identity.
+    ingester:
+      ring:
+        replication_factor: 1
+      # Classic architecture: no Kafka queue, and the ingester must accept
+      # gRPC pushes from the distributor (the chart disables this by default
+      # because it assumes the Kafka ingest path).
+      push_grpc_method_enabled: true
+    ingest_storage:
+      enabled: false
+
+# No Kafka broker.
+kafka:
+  enabled: false
+
+# --- Core write/read/store path: one replica each, zone-awareness off ---
+distributor:
+  replicas: 1
+
+ingester:
+  replicas: 1
+  zoneAwareReplication:
+    enabled: false
+  persistentVolume:
+    enabled: false
+
+querier:
+  replicas: 1
+
+query_frontend:
+  replicas: 1
+
+query_scheduler:
+  replicas: 1
+
+store_gateway:
+  replicas: 1
+  zoneAwareReplication:
+    enabled: false
+  persistentVolume:
+    enabled: false
+
+compactor:
+  persistentVolume:
+    enabled: false
+
+# --- Disable everything not needed for the metrics store ---
+alertmanager:
+  enabled: false        # standalone Alertmanager comes in Phase 6
+ruler:
+  enabled: false        # enabled in Phase 6 for burn-rate rules
+overrides_exporter:
+  enabled: false
+gateway:
+  enabled: false        # Collector pushes to the distributor directly
+minio:
+  enabled: false
+
+chunks-cache:
+  enabled: false
+index-cache:
+  enabled: false
+metadata-cache:
+  enabled: false
+results-cache:
+  enabled: false

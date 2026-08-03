@@ -1,0 +1,34 @@
+# Grafana Tempo — traces backend for Project 3 (single binary, S3-backed).
+replicas: 1
+
+tempo:
+  retention: 24h
+
+  storage:
+    trace:
+      backend: s3
+      s3:
+        bucket: taskflow-obs-tempo-713923090919
+        endpoint: s3.us-east-1.amazonaws.com
+        region: us-east-1
+        # No access_key/secret_key -> the AWS SDK uses the IAM role via Pod Identity.
+      wal:
+        path: /var/tempo/wal
+
+  # Accept OTLP only (drop the default Jaeger receivers to keep it lean).
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: "0.0.0.0:4317"
+        http:
+          endpoint: "0.0.0.0:4318"
+
+# Bind to the SA that Phase 1 associated with the Tempo IAM role.
+serviceAccount:
+  create: true
+  name: tempo
+
+# Cluster is disposable; durable data lives in S3. WAL uses an emptyDir.
+persistence:
+  enabled: false
