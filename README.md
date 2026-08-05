@@ -62,35 +62,7 @@ Everything is provisioned with **Terraform** and installed with **Helm**. The cl
 
 ## Architecture
 
-```
-                          taskflow-app (Node.js + OTel SDK)
-                                     │  OTLP (traces, metrics)
-                                     │  stdout JSON (logs)
-                                     ▼
-                        ┌────────────────────────────┐
-                        │   OpenTelemetry Collector   │  daemonset
-                        │  OTLP in · filelog · k8sattr │  (tails node logs)
-                        └────────────┬───────────────┘
-                     logs │      traces │      metrics │
-                          ▼             ▼              ▼
-                    ┌─────────┐   ┌─────────┐    ┌─────────┐
-                    │  Loki   │   │  Tempo  │    │  Mimir  │
-                    └────┬────┘   └────┬────┘    └────┬────┘
-                         │             │              │
-                         └──────── Amazon S3 ─────────┘
-                              (Pod Identity access)
-                          │                        │
-                          ▼                        ▼
-                    ┌──────────┐          ┌──────────────┐
-                    │ Grafana  │          │ Mimir ruler  │
-                    │ (view +  │          │ (SLO burn-   │
-                    │  correlate)         │  rate rules) │
-                    └──────────┘          └──────┬───────┘
-                                                 ▼
-                                        ┌──────────────┐
-                                        │ Alertmanager │→ Slack + email
-                                        └──────────────┘
-```
+![Architecture](docs/architecture.svg)
 
 **Signal paths:**
 - **Metrics** — SDK → Collector (OTLP) → Mimir distributor (`/otlp`) → S3

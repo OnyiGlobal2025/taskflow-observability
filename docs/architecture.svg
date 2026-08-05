@@ -1,0 +1,106 @@
+<svg viewBox="0 0 1000 700" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
+      <path d="M0,0 L6.5,3 L0,6 Z" fill="#555"/>
+    </marker>
+  </defs>
+
+  <!-- title -->
+  <text x="500" y="32" text-anchor="middle" font-size="20" font-weight="700" fill="#1a1a2e">taskflow-observability — architecture</text>
+  <text x="500" y="52" text-anchor="middle" font-size="12.5" fill="#6b7280">OpenTelemetry → LGTM stack on S3 → Grafana + SLO alerting</text>
+
+  <!-- EKS boundary -->
+  <rect x="25" y="70" width="805" height="600" rx="14" fill="none" stroke="#326CE5" stroke-width="1.6" stroke-dasharray="7 5"/>
+  <text x="44" y="92" font-size="12.5" font-weight="600" fill="#326CE5">Amazon EKS · us-east-1</text>
+
+  <!-- App -->
+  <rect x="300" y="104" width="270" height="60" rx="8" fill="#2E7D32"/>
+  <text x="435" y="130" text-anchor="middle" font-size="15" font-weight="600" fill="#fff">taskflow-app</text>
+  <text x="435" y="148" text-anchor="middle" font-size="11.5" fill="#ffffff" opacity="0.9">Node.js + OpenTelemetry SDK · pino</text>
+
+  <!-- App -> Collector -->
+  <line x1="435" y1="164" x2="435" y2="196" stroke="#555" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <rect x="446" y="170" width="120" height="16" rx="3" fill="#fff"/>
+  <text x="450" y="182" font-size="10.5" fill="#555">OTLP + stdout logs</text>
+
+  <!-- Collector -->
+  <rect x="265" y="198" width="340" height="60" rx="8" fill="#3F51B5"/>
+  <text x="435" y="224" text-anchor="middle" font-size="15" font-weight="600" fill="#fff">OpenTelemetry Collector</text>
+  <text x="435" y="242" text-anchor="middle" font-size="11.5" fill="#fff" opacity="0.9">daemonset · OTLP · filelog · k8sattributes</text>
+
+  <!-- fan-out arrows -->
+  <line x1="435" y1="258" x2="165" y2="300" stroke="#555" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <rect x="270" y="270" width="42" height="16" rx="3" fill="#fff"/>
+  <text x="274" y="282" font-size="10.5" fill="#555">logs</text>
+
+  <line x1="435" y1="258" x2="435" y2="300" stroke="#555" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <rect x="443" y="270" width="52" height="16" rx="3" fill="#fff"/>
+  <text x="447" y="282" font-size="10.5" fill="#555">traces</text>
+
+  <line x1="435" y1="258" x2="705" y2="300" stroke="#555" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <rect x="560" y="270" width="58" height="16" rx="3" fill="#fff"/>
+  <text x="564" y="282" font-size="10.5" fill="#555">metrics</text>
+
+  <!-- Backends -->
+  <rect x="75" y="302" width="180" height="56" rx="8" fill="#F9A825"/>
+  <text x="165" y="326" text-anchor="middle" font-size="15" font-weight="600" fill="#fff">Loki</text>
+  <text x="165" y="344" text-anchor="middle" font-size="11" fill="#fff" opacity="0.95">logs</text>
+
+  <rect x="345" y="302" width="180" height="56" rx="8" fill="#6A4C93"/>
+  <text x="435" y="326" text-anchor="middle" font-size="15" font-weight="600" fill="#fff">Tempo</text>
+  <text x="435" y="344" text-anchor="middle" font-size="11" fill="#fff" opacity="0.95">traces</text>
+
+  <rect x="615" y="302" width="180" height="56" rx="8" fill="#C2410C"/>
+  <text x="705" y="326" text-anchor="middle" font-size="15" font-weight="600" fill="#fff">Mimir</text>
+  <text x="705" y="344" text-anchor="middle" font-size="11" fill="#fff" opacity="0.95">metrics</text>
+
+  <!-- Backends -> S3 -->
+  <line x1="165" y1="358" x2="300" y2="398" stroke="#555" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <line x1="435" y1="358" x2="435" y2="398" stroke="#555" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <line x1="705" y1="358" x2="570" y2="398" stroke="#555" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <!-- S3 -->
+  <rect x="290" y="400" width="290" height="54" rx="8" fill="#FF9900"/>
+  <text x="435" y="424" text-anchor="middle" font-size="15" font-weight="600" fill="#fff">Amazon S3</text>
+  <text x="435" y="442" text-anchor="middle" font-size="11" fill="#fff" opacity="0.95">object storage · Pod Identity (keyless)</text>
+
+  <!-- query -> Grafana -->
+  <line x1="150" y1="358" x2="185" y2="512" stroke="#555" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <rect x="95" y="430" width="120" height="16" rx="3" fill="#fff"/>
+  <text x="99" y="442" font-size="10.5" fill="#555">query Loki/Tempo/Mimir</text>
+
+  <!-- Grafana -->
+  <rect x="70" y="514" width="240" height="58" rx="8" fill="#F46800"/>
+  <text x="190" y="540" text-anchor="middle" font-size="15" font-weight="600" fill="#fff">Grafana</text>
+  <text x="190" y="558" text-anchor="middle" font-size="11" fill="#fff" opacity="0.95">dashboards · trace ↔ log correlation</text>
+
+  <!-- Mimir -> Ruler -->
+  <line x1="705" y1="358" x2="705" y2="470" stroke="#555" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <rect x="712" y="405" width="66" height="16" rx="3" fill="#fff"/>
+  <text x="716" y="417" font-size="10.5" fill="#555">evaluate</text>
+
+  <!-- Ruler -->
+  <rect x="615" y="472" width="180" height="52" rx="8" fill="#C2410C"/>
+  <text x="705" y="494" text-anchor="middle" font-size="14" font-weight="600" fill="#fff">Mimir Ruler</text>
+  <text x="705" y="512" text-anchor="middle" font-size="10.5" fill="#fff" opacity="0.95">SLO burn-rate rules</text>
+
+  <!-- Ruler -> Alertmanager -->
+  <line x1="705" y1="524" x2="705" y2="560" stroke="#555" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <!-- Alertmanager -->
+  <rect x="615" y="562" width="180" height="52" rx="8" fill="#E6522C"/>
+  <text x="705" y="592" text-anchor="middle" font-size="14.5" font-weight="600" fill="#fff">Alertmanager</text>
+
+  <!-- Alertmanager -> Slack/Email (crosses boundary) -->
+  <line x1="795" y1="588" x2="858" y2="588" stroke="#555" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <rect x="800" y="566" width="52" height="16" rx="3" fill="#fff"/>
+  <text x="804" y="578" font-size="10.5" fill="#555">notify</text>
+
+  <!-- Slack + Email (external) -->
+  <rect x="860" y="560" width="118" height="56" rx="8" fill="#4A154B"/>
+  <text x="919" y="584" text-anchor="middle" font-size="14" font-weight="600" fill="#fff">Slack</text>
+  <text x="919" y="602" text-anchor="middle" font-size="11" fill="#fff" opacity="0.95">+ Email</text>
+
+  <!-- provisioning footnote -->
+  <text x="44" y="655" font-size="11" fill="#6b7280">Provisioned with Terraform · installed with Helm · cluster disposable, durable data in S3</text>
+</svg>
