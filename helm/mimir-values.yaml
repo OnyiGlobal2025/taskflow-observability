@@ -1,6 +1,5 @@
 # Grafana Mimir — metrics backend for Project 3.
-# Minimal, classic (non-Kafka) architecture: single replicas, no zone-aware
-# replication, emptyDir storage. Durable data lives in S3.
+# Minimal classic architecture; ruler enabled for SLO burn-rate alerts.
 
 serviceAccount:
   create: true
@@ -15,22 +14,27 @@ mimir:
           endpoint: s3.us-east-1.amazonaws.com
           region: us-east-1
           bucket_name: taskflow-obs-mimir-713923090919
-          # No keys -> the AWS SDK uses the IAM role via Pod Identity.
     ingester:
       ring:
         replication_factor: 1
-      # Classic architecture: no Kafka queue, and the ingester must accept
-      # gRPC pushes from the distributor (the chart disables this by default
-      # because it assumes the Kafka ingest path).
       push_grpc_method_enabled: true
     ingest_storage:
       enabled: false
+    limits:
+      out_of_order_time_window: 10m
+    # Ruler stores its rule groups in S3 (same bucket, separate prefix).
+    ruler_storage:
+      backend: s3
+      s3:
+        bucket_name: taskflow-obs-mimir-713923090919
+      storage_prefix: ruler
+    # Ruler sends fired alerts to standalone Alertmanager.
+    ruler:
+      alertmanager_url: http://alertmanager.observability.svc.cluster.local:9093
 
-# No Kafka broker.
 kafka:
   enabled: false
 
-# --- Core write/read/store path: one replica each, zone-awareness off ---
 distributor:
   replicas: 1
 
@@ -61,15 +65,16 @@ compactor:
   persistentVolume:
     enabled: false
 
-# --- Disable everything not needed for the metrics store ---
-alertmanager:
-  enabled: false        # standalone Alertmanager comes in Phase 6
+# Ruler ON now; others stay off.
 ruler:
-  enabled: false        # enabled in Phase 6 for burn-rate rules
+  enabled: true
+
+alertmanager:
+  enabled: false
 overrides_exporter:
   enabled: false
 gateway:
-  enabled: false        # Collector pushes to the distributor directly
+  enabled: false
 minio:
   enabled: false
 
