@@ -1,0 +1,54 @@
+# Grafana — visualization for Project 3.
+# Accessed via port-forward (no public ingress; the domain is lapsed).
+
+persistence:
+  enabled: false
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Mimir
+        type: prometheus
+        uid: mimir
+        access: proxy
+        url: http://mimir-query-frontend.observability.svc.cluster.local:8080/prometheus
+        isDefault: true
+        jsonData:
+          httpHeaderName1: "X-Scope-OrgID"
+        secureJsonData:
+          httpHeaderValue1: "anonymous"
+
+      - name: Loki
+        type: loki
+        uid: loki
+        access: proxy
+        url: http://loki.observability.svc.cluster.local:3100
+        jsonData:
+          httpHeaderName1: "X-Scope-OrgID"
+          # Logs -> Traces: link off the structured-metadata trace_id field.
+          derivedFields:
+            - name: TraceID
+              matcherType: label
+              matcherRegex: trace_id
+              url: '${__value.raw}'
+              datasourceUid: tempo
+              urlDisplayLabel: 'View Trace'
+        secureJsonData:
+          httpHeaderValue1: "anonymous"
+
+      - name: Tempo
+        type: tempo
+        uid: tempo
+        access: proxy
+        url: http://tempo.observability.svc.cluster.local:3200
+        jsonData:
+          # Traces -> Logs: from a span, open the matching logs in Loki.
+          tracesToLogsV2:
+            datasourceUid: loki
+            spanStartTimeShift: '-5m'
+            spanEndTimeShift: '5m'
+            filterByTraceID: true
+            tags:
+              - key: 'service.name'
+                value: 'service_name'
